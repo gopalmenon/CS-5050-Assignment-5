@@ -126,6 +126,11 @@ public class TravellingSalesmanUI {
     	private static boolean routingAttempted = false;
     	private static boolean routefound = false;
     	
+    	static {
+    		//Reserve the first slot for the starting city
+    		destinations.add(null);
+    	}
+    	
     	public void paintComponent(Graphics g) {
         	
             super.paintComponent(g);
@@ -133,7 +138,9 @@ public class TravellingSalesmanUI {
             //Draw cities
             g.setColor(Color.BLACK);
             for (City city : destinations) {
-            	g.fillOval(Double.valueOf(city.getxCoordinate()).intValue() - START_END_DIMENSION / 2, Double.valueOf(city.getyCoordinate()).intValue() - START_END_DIMENSION / 2, START_END_DIMENSION, START_END_DIMENSION);
+            	if (city != null) {
+            		g.fillOval(Double.valueOf(city.getxCoordinate()).intValue() - START_END_DIMENSION / 2, Double.valueOf(city.getyCoordinate()).intValue() - START_END_DIMENSION / 2, START_END_DIMENSION, START_END_DIMENSION);
+            	}
             }
             
             //Draw start point
@@ -162,6 +169,7 @@ public class TravellingSalesmanUI {
 			case ADD_START_MODE:
 				if (!routingAttempted) {
 					startPoint = new City(e.getX(), e.getY());
+					destinations.set(0, startPoint);
 				}
 				break;
 											
@@ -170,17 +178,29 @@ public class TravellingSalesmanUI {
 			repaint();
 		}
 		
-		public void retrieveRoute() {
-			if (!routingAttempted) {
-				if (tour != null) {
-					routefound = true;
+		public void findTour() {
+			if (!routingAttempted && startPoint != null) {
+				try {
+					TravellingSalesman travellingSalesman = new TravellingSalesman(destinations, selectedTourMode);
+					tour = travellingSalesman.getShortestTour();
+					if (tour != null) {
+						routefound = true;
+					}
+					routingAttempted = true;
+					repaint();
+				} catch (Exception e) {
+					e.printStackTrace();
+					System.exit(0);
 				}
-				routingAttempted = true;
-				repaint();
 			}
 		}
 
-		public String getMetricsMessage() {
+	    
+	    public void showMetrics() {
+	    	
+	    }
+
+	    public String getMetricsMessage() {
 			
 			if (routingAttempted) {
 				StringBuffer metricsMessage = new StringBuffer();
@@ -212,14 +232,6 @@ public class TravellingSalesmanUI {
 		@Override
 		public void mouseExited(MouseEvent e) {
 		}    	
-	    
-	    public void findTour() {
-	    	
-	    }
-	    
-	    public void showMetrics() {
-	    	
-	    }
 
     }
     
@@ -235,8 +247,13 @@ public class TravellingSalesmanUI {
     		}
     		
 			g.drawLine(Double.valueOf(previousCity.getxCoordinate()).intValue(), Double.valueOf(previousCity.getyCoordinate()).intValue(), Double.valueOf(city.getxCoordinate()).intValue(), Double.valueOf(city.getyCoordinate()).intValue());
-    		
+			previousCity = city;
+			
     	}
+    	
+    	//Show return to start city
+    	g.setColor(Color.RED);
+    	g.drawLine(Double.valueOf(previousCity.getxCoordinate()).intValue(), Double.valueOf(previousCity.getyCoordinate()).intValue(), Double.valueOf(tour.getCitiesInTour().get(0).getxCoordinate()).intValue(), Double.valueOf(tour.getCitiesInTour().get(0).getyCoordinate()).intValue());
     	
     }
     
