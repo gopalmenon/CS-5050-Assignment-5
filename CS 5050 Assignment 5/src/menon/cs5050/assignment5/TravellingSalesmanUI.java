@@ -25,7 +25,7 @@ public class TravellingSalesmanUI {
      */
     private void createAndShowGUI() {
         //Create and set up the window.
-        JFrame frame = new JFrame("Travelling Salesman");
+        JFrame frame = new JFrame("Traveling Salesman");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setResizable(false);
 
@@ -102,7 +102,8 @@ public class TravellingSalesmanUI {
         findTourMenuItem = new JMenuItem("Find Tour");
         findTourMenuItem.addActionListener(new ActionListener() {public void actionPerformed(ActionEvent e) {terrain.findTour();} });
         showMetricsMenuItem = new JMenuItem("Show Metrics");
-        showMetricsMenuItem.addActionListener(new ActionListener() {public void actionPerformed(ActionEvent e) {terrain.showMetrics();} });
+        showMetricsMenuItem.addActionListener(new ActionListener() {public void actionPerformed(ActionEvent e) {JOptionPane.showMessageDialog(terrain, terrain.getMetricsMessage());} });
+
         tourMenu.add(findTourMenuItem);
         tourMenu.add(showMetricsMenuItem);
         menuBar.add(tourMenu);
@@ -205,14 +206,15 @@ public class TravellingSalesmanUI {
 			if (routingAttempted) {
 				StringBuffer metricsMessage = new StringBuffer();
 				if (routefound) {
-					//metricsMessage.append(this.numberOfNodesExpanded).append(" nodes were expanded to find the route, which is ").append(this.routeLength).append(" pixels long.");
+					
+					metricsMessage.append(tour.getNumberOfStatesExpanded()).append(" states were expanded to find the shortest tour.");
 					return metricsMessage.toString();
 				} else {
-					//metricsMessage.append(this.numberOfNodesExpanded).append(" nodes were expanded, but the route was not found.");
+					metricsMessage.append(tour.getNumberOfStatesExpanded()).append(" states were expanded, but the shortest tour was not found.");
 					return metricsMessage.toString();
 				}
 			} else {
-				return "The route has not been mapped yet.";
+				return "The tour has not been found yet.";
 			}
 
 		}
