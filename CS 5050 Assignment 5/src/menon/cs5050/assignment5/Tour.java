@@ -7,10 +7,12 @@ public class Tour {
 
 	private List<City> citiesInTour;
 	private double tourLength;
+	private int numberOfStatesExpanded;
 	
 	public Tour(List<City> citiesInTour, double tourLength) {
 		this.citiesInTour = citiesInTour;
 		this.tourLength = tourLength;
+		this.numberOfStatesExpanded = 0;
 	}
 	
 	public Tour(Tour tourToClone) {
@@ -31,6 +33,14 @@ public class Tour {
 		this.tourLength = tourLength;
 	}
 	
+	public int getNumberOfStatesExpanded() {
+		return numberOfStatesExpanded;
+	}
+
+	public void setNumberOfStatesExpanded(int numberOfStatesExpanded) {
+		this.numberOfStatesExpanded = numberOfStatesExpanded;
+	}
+
 	private City getLastCity() {
 		return this.citiesInTour.get(this.citiesInTour.size() - 1);
 	}
