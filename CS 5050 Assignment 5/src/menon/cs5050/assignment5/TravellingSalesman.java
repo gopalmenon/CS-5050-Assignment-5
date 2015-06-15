@@ -45,7 +45,7 @@ public class TravellingSalesman {
 		} else if (LOCAL_LOWER_BOUND_SOLUTION_FROM_CLASS.equalsIgnoreCase(this.solutionToUse)) {
 			shortestTour = getGlobalUpperBoundWithLocalLowerBoundSearchTour(new Tour(new ArrayList<City>(), 0), this.citiesToVisit);
 		} else if (LOCAL_LOWER_BOUND_SOLUTION_NEW.equalsIgnoreCase(this.solutionToUse)) {
-			return null;
+			shortestTour = getGlobalUpperBoundWithNewLocalLowerBoundSearchTour(new Tour(new ArrayList<City>(), 0), this.citiesToVisit);
 		} else if (INITIAL_GREEDY_SOLUTION_WITH_LB.equalsIgnoreCase(this.solutionToUse)) {
 			return null;
 		} else if (INITIAL_GREEDY_SOLUTION_WITH_LB_NEW.equalsIgnoreCase(this.solutionToUse)) {
@@ -174,11 +174,75 @@ public class TravellingSalesman {
 		}
 		
 		//Don't search further if the incomplete tour plus lower bound is already longer than the current best
+		double tourLengthSoFar = tour.getTourLength();
 		if (tour.getCitiesInTour().size() > 0) {
-			double tourLengthSoFar = tour.getTourLength() + tour.getCitiesInTour().get(tour.getCitiesInTour().size() -1).distanceTo(tour.getCitiesInTour().get(0));
-			if (tourLengthSoFar > this.bestRouteDistanceSoFar) {
-				return null;
+			tourLengthSoFar += tour.getTourLength() + tour.getCitiesInTour().get(tour.getCitiesInTour().size() -1).distanceTo(tour.getCitiesInTour().get(0));
+		}
+		
+		if (tourLengthSoFar > this.bestRouteDistanceSoFar) {
+			return null;
+		}
+		
+		int numberOfRemainingCities = remainingCities.size();
+		Tour bestTour = null, modifiedTour = null, currentTour = null;
+		City cityToAdd = null;
+		List<City> modifiedMemainingCities = null;
+
+		//Loop through remaining cities that need to be included in the tour
+		for (int cityIndex = 0; cityIndex < numberOfRemainingCities; ++cityIndex) {
+			
+			++this.numberOfStatesExpanded;
+			
+			cityToAdd = remainingCities.get(cityIndex);
+			modifiedTour = new Tour(tour);
+			modifiedTour.addCity(cityToAdd);
+			modifiedMemainingCities = new ArrayList<City>(remainingCities);
+			modifiedMemainingCities.remove(cityToAdd);
+			
+			currentTour = getGlobalUpperBoundWithLocalLowerBoundSearchTour(modifiedTour, modifiedMemainingCities);
+			if (currentTour != null) {
+				if (bestTour == null) {
+					bestTour = currentTour;
+				} else {
+					if (currentTour.getTourLength() < bestTour.getTourLength()) {
+						bestTour = currentTour;
+					}
+				}
 			}
+			
+		}
+		
+		return bestTour;
+		
+	}
+	
+	/**
+	 * @param tour
+	 * @param remainingCities
+	 * @return the shortest tour after doing an exhaustive search that disregards any tours that are longer than current best plus the
+	 *         lower bound of the remaining distance. The lower bound is computed using the straight line distance from the current last
+	 *         city in the tour, to another city and back to the starting city.  
+	 */
+	private Tour getGlobalUpperBoundWithNewLocalLowerBoundSearchTour(Tour tour, List<City> remainingCities) {
+				
+		//Cover the base case for when there are no cities remaining
+		if (remainingCities.size() == 0) {
+			if (tour.getTourLength() < this.bestRouteDistanceSoFar) {
+				this.bestRouteDistanceSoFar = tour.getTourLength();
+			}
+			return tour;
+		}
+		
+		//Don't search further if the incomplete tour plus lower bound is already longer than the current best
+		double tourLengthSoFar = tour.getTourLength();
+		if (tour.getCitiesInTour().size() > 0 && remainingCities.size() > 0) {
+			tourLengthSoFar += tour.getTourLength() + 
+					           tour.getCitiesInTour().get(tour.getCitiesInTour().size() -1).distanceTo(remainingCities.get(0)) + 
+					           remainingCities.get(0).distanceTo(tour.getCitiesInTour().get(0));
+		}
+
+		if (tourLengthSoFar > this.bestRouteDistanceSoFar) {
+			return null;
 		}
 
 		int numberOfRemainingCities = remainingCities.size();
@@ -197,7 +261,7 @@ public class TravellingSalesman {
 			modifiedMemainingCities = new ArrayList<City>(remainingCities);
 			modifiedMemainingCities.remove(cityToAdd);
 			
-			currentTour = getGlobalUpperBoundWithLocalLowerBoundSearchTour(modifiedTour, modifiedMemainingCities);
+			currentTour = getGlobalUpperBoundWithNewLocalLowerBoundSearchTour(modifiedTour, modifiedMemainingCities);
 			if (currentTour != null) {
 				if (bestTour == null) {
 					bestTour = currentTour;
