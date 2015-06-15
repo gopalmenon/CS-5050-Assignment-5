@@ -11,6 +11,7 @@ public class TravellingSalesmanClient {
 	private Random randomDoubleGenerator;
 	private List<City> citiesToTour;
 	
+	
 	/**
 	 * Constructor
 	 * @param numberOfCitiesToTour
