@@ -16,7 +16,12 @@ public class Tour {
 	}
 	
 	public Tour(Tour tourToClone) {
-		this.citiesInTour = new ArrayList<City>(tourToClone.getCitiesInTour());
+		
+		this.citiesInTour = new ArrayList<City>(tourToClone.getCitiesInTour().size());
+		for (City city : tourToClone.getCitiesInTour()) {
+			this.citiesInTour.add(city);		
+		}
+		
 		this.tourLength = tourToClone.getTourLength();
 	}
 	
@@ -41,8 +46,12 @@ public class Tour {
 		this.numberOfStatesExpanded = numberOfStatesExpanded;
 	}
 
-	private City getLastCity() {
-		return this.citiesInTour.get(this.citiesInTour.size() - 1);
+	City getLastCity() {
+		if (this.citiesInTour.size() == 0) {
+			return null;
+		} else {
+			return this.citiesInTour.get(this.citiesInTour.size() - 1);
+		}
 	}
 	
 	/**
@@ -52,9 +61,25 @@ public class Tour {
 	 */
 	public void addCity(City cityToAdd) {
 		
+		City lastCity = getLastCity();
 		this.citiesInTour.add(cityToAdd);
-		this.tourLength += getLastCity().distanceTo(cityToAdd);
+		if (lastCity != null) {
+			this.tourLength += lastCity.distanceTo(cityToAdd);
+		}
 		
+	}
+	
+	/**
+	 * Add a city to the tour by appending the cities array with the new city and incrementing the tour length by the distance 
+	 * passed in as a parameter
+	 * @param cityToAdd
+	 * @param distanceToCity
+	 */
+	void addCity(City cityToAdd, double distanceToCity) {
+
+		this.citiesInTour.add(cityToAdd);
+		this.tourLength += distanceToCity;
+
 	}
 	
 	@Override
@@ -80,6 +105,26 @@ public class Tour {
 		returnValue.append("]");
 		
 		return returnValue.toString();
+		
+	}
+	
+	/**
+	 * @param city
+	 * @return true if the tour contain the city
+	 */
+	public boolean contains(City city) {
+		
+		if (city == null) {
+			return false;
+		}
+		
+		for (City cityinTour : this.citiesInTour) {
+			if (city.equals(cityinTour)) {
+				return true;
+			}
+		}
+		
+		return false;
 		
 	}
 	

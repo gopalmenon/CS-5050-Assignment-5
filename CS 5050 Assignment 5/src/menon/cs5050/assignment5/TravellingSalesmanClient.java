@@ -62,7 +62,7 @@ public class TravellingSalesmanClient {
 	private Tour getShortestTour() {
 		
 		try {
-			TravellingSalesman travellingSalesman = new TravellingSalesman(this.citiesToTour, TravellingSalesman.EXHAUSTIVE_SOLUTION);
+			TravellingSalesman travellingSalesman = new TravellingSalesman(getNextRandomCity(), this.citiesToTour, TravellingSalesman.EXHAUSTIVE_SOLUTION);
 			return travellingSalesman.getShortestTour();
 		} catch (Exception e) {
 			e.printStackTrace();
