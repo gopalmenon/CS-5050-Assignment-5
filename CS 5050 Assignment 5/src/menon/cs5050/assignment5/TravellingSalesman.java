@@ -1,7 +1,9 @@
 package menon.cs5050.assignment5;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class TravellingSalesman {
 	
@@ -12,12 +14,15 @@ public class TravellingSalesman {
 	public static final String INITIAL_GREEDY_SOLUTION_WITH_LB = "IG";
 	public static final String INITIAL_GREEDY_SOLUTION_WITH_LB_NEW = "IGN";
 	
+	private City startCity;
 	private List<City> citiesToVisit;
 	private String solutionToUse;
 	private double bestRouteDistanceSoFar;
 	private int numberOfStatesExpanded;
+	private Map<CityPair, Double> distanceTable;
+	private Tour greedySolutionTour;
 	
-	public TravellingSalesman(List<City> citiesToVisit, String solutionToUse) throws Exception {
+	public TravellingSalesman(City startCity, List<City> citiesToVisit, String solutionToUse) throws Exception {
 		
 		if (!EXHAUSTIVE_SOLUTION.equalsIgnoreCase(solutionToUse.trim()) && !GLOBAL_UPPER_BOUND_SOLUTION.equalsIgnoreCase(solutionToUse.trim()) &&
 			!LOCAL_LOWER_BOUND_SOLUTION_FROM_CLASS.equalsIgnoreCase(solutionToUse.trim()) && !LOCAL_LOWER_BOUND_SOLUTION_NEW.equalsIgnoreCase(solutionToUse.trim()) &&
@@ -25,10 +30,90 @@ public class TravellingSalesman {
 			throw new Exception("Invalid solution to use " + solutionToUse);
 		}
 		
+		this.startCity = startCity;
 		this.citiesToVisit = citiesToVisit;
 		this.solutionToUse = solutionToUse.trim();
 		this.bestRouteDistanceSoFar = Double.MAX_VALUE;
 		this.numberOfStatesExpanded = 0;
+		
+		if (INITIAL_GREEDY_SOLUTION_WITH_LB.equalsIgnoreCase(solutionToUse.trim()) || INITIAL_GREEDY_SOLUTION_WITH_LB_NEW.equalsIgnoreCase(solutionToUse.trim())) {
+			this.distanceTable = new HashMap<CityPair, Double>();
+			this.greedySolutionTour = new Tour(new ArrayList<City>(), 0);
+			fillDistanceTable();
+			findGreedySolutionTour();
+		} else {
+			this.distanceTable = null;
+			this.greedySolutionTour = null;
+		}
+		
+	}
+	
+	/**
+	 * Fill up table for distance between cities. The table will be used by the greedy solution.
+	 */
+	private void fillDistanceTable() {
+		
+		//Loop through all cities in the list all fill the table
+		int numberOfCities = this.citiesToVisit.size();
+		double distancebetweenCities = 0.0;
+		for (int fromCityIndex = 0; fromCityIndex < numberOfCities - 1; ++fromCityIndex) {
+			
+			distancebetweenCities = this.citiesToVisit.get(fromCityIndex).distanceTo(this.startCity);
+			distanceTable.put(new CityPair(this.citiesToVisit.get(fromCityIndex), this.startCity), Double.valueOf(distancebetweenCities));
+			distanceTable.put(new CityPair(this.startCity, this.citiesToVisit.get(fromCityIndex)), Double.valueOf(distancebetweenCities));
+			
+			for (int toCityIndex = fromCityIndex + 1; toCityIndex < numberOfCities; ++toCityIndex) {
+				
+				distancebetweenCities = this.citiesToVisit.get(fromCityIndex).distanceTo(this.citiesToVisit.get(toCityIndex));
+				distanceTable.put(new CityPair(this.citiesToVisit.get(fromCityIndex), this.citiesToVisit.get(toCityIndex)), Double.valueOf(distancebetweenCities));
+				distanceTable.put(new CityPair(this.citiesToVisit.get(toCityIndex), this.citiesToVisit.get(fromCityIndex)), Double.valueOf(distancebetweenCities));
+		
+			}
+		}
+
+		distancebetweenCities = this.citiesToVisit.get(numberOfCities - 1).distanceTo(this.startCity);
+		distanceTable.put(new CityPair(this.citiesToVisit.get(numberOfCities - 1), this.startCity), Double.valueOf(distancebetweenCities));
+		distanceTable.put(new CityPair(this.startCity, this.citiesToVisit.get(numberOfCities - 1)), Double.valueOf(distancebetweenCities));
+		
+	}
+	
+	/**
+	 * Find the greedy solution tour from the starting city by selecting the closest next city
+	 */
+	private void findGreedySolutionTour() {
+		
+		//Start with the city of origin
+		City fromCity = this.startCity, closestCity = null;
+		this.greedySolutionTour.addCity(fromCity, 0.0);
+		double closestCityDistance = Double.MAX_VALUE;
+		boolean moreCitiesToVisit = true;
+		
+		while (moreCitiesToVisit) {
+			
+			closestCityDistance = Double.MAX_VALUE;
+			closestCity = null;
+			
+			for (City city : this.citiesToVisit) {
+				if (!city.equals(fromCity) && !this.greedySolutionTour.contains(city)) {
+				
+					if (this.distanceTable.get(new CityPair(fromCity, city)).doubleValue() < closestCityDistance) {
+						closestCityDistance = this.distanceTable.get(new CityPair(fromCity, city)).doubleValue();
+						closestCity = city;
+					}
+				
+				}
+			}
+			
+			if (closestCity == null) {
+				moreCitiesToVisit = false;
+			} else {
+				this.greedySolutionTour.addCity(closestCity, closestCityDistance);
+				fromCity = closestCity;
+			}
+
+		}
+		
+		this.bestRouteDistanceSoFar = this.greedySolutionTour.getTourLength();
 		
 	}
 	
@@ -38,18 +123,26 @@ public class TravellingSalesman {
 	public Tour getShortestTour() {
 		
 		Tour shortestTour = null;
+		Tour tour = new Tour(new ArrayList<City>(), 0);
+		tour.addCity(startCity);
 		if (EXHAUSTIVE_SOLUTION.equalsIgnoreCase(this.solutionToUse)) {
-			shortestTour = getExhaustiveSearchTour(new Tour(new ArrayList<City>(), 0), this.citiesToVisit);
+			shortestTour = getExhaustiveSearchTour(tour, this.citiesToVisit);
 		} else if (GLOBAL_UPPER_BOUND_SOLUTION.equalsIgnoreCase(this.solutionToUse)) {
-			shortestTour = getGlobalUpperBoundSearchTour(new Tour(new ArrayList<City>(), 0), this.citiesToVisit);
+			shortestTour = getGlobalUpperBoundSearchTour(tour, this.citiesToVisit);
 		} else if (LOCAL_LOWER_BOUND_SOLUTION_FROM_CLASS.equalsIgnoreCase(this.solutionToUse)) {
-			shortestTour = getGlobalUpperBoundWithLocalLowerBoundSearchTour(new Tour(new ArrayList<City>(), 0), this.citiesToVisit);
+			shortestTour = getGlobalUpperBoundWithLocalLowerBoundSearchTour(tour, this.citiesToVisit);
 		} else if (LOCAL_LOWER_BOUND_SOLUTION_NEW.equalsIgnoreCase(this.solutionToUse)) {
-			shortestTour = getGlobalUpperBoundWithNewLocalLowerBoundSearchTour(new Tour(new ArrayList<City>(), 0), this.citiesToVisit);
+			shortestTour = getGlobalUpperBoundWithNewLocalLowerBoundSearchTour(tour, this.citiesToVisit);
 		} else if (INITIAL_GREEDY_SOLUTION_WITH_LB.equalsIgnoreCase(this.solutionToUse)) {
-			return null;
+			shortestTour = getGlobalUpperBoundWithLocalLowerBoundSearchTour(tour, this.citiesToVisit);
+			if (shortestTour == null) {
+				shortestTour = this.greedySolutionTour;
+			}
 		} else if (INITIAL_GREEDY_SOLUTION_WITH_LB_NEW.equalsIgnoreCase(this.solutionToUse)) {
-			return null;
+			shortestTour =  getGlobalUpperBoundWithNewLocalLowerBoundSearchTour(tour, this.citiesToVisit);;
+			if (shortestTour == null) {
+				shortestTour = this.greedySolutionTour;
+			}
 		}
 		
 		if (shortestTour != null) {
@@ -164,6 +257,16 @@ public class TravellingSalesman {
 	 *         city in the tour to the starting city.  
 	 */
 	private Tour getGlobalUpperBoundWithLocalLowerBoundSearchTour(Tour tour, List<City> remainingCities) {
+		
+		//Don't search further if the incomplete tour plus lower bound is already longer than the current best
+		double tourLengthSoFar = tour.getTourLength();
+		if (tour.getCitiesInTour().size() > 0) {
+			tourLengthSoFar += tour.getTourLength() + tour.getCitiesInTour().get(tour.getCitiesInTour().size() -1).distanceTo(this.startCity);
+		}
+		
+		if (tourLengthSoFar > this.bestRouteDistanceSoFar) {
+			return null;
+		}
 				
 		//Cover the base case for when there are no cities remaining
 		if (remainingCities.size() == 0) {
@@ -171,16 +274,6 @@ public class TravellingSalesman {
 				this.bestRouteDistanceSoFar = tour.getTourLength();
 			}
 			return tour;
-		}
-		
-		//Don't search further if the incomplete tour plus lower bound is already longer than the current best
-		double tourLengthSoFar = tour.getTourLength();
-		if (tour.getCitiesInTour().size() > 0) {
-			tourLengthSoFar += tour.getTourLength() + tour.getCitiesInTour().get(tour.getCitiesInTour().size() -1).distanceTo(tour.getCitiesInTour().get(0));
-		}
-		
-		if (tourLengthSoFar > this.bestRouteDistanceSoFar) {
-			return null;
 		}
 		
 		int numberOfRemainingCities = remainingCities.size();
@@ -224,6 +317,18 @@ public class TravellingSalesman {
 	 *         city in the tour, to another city and back to the starting city.  
 	 */
 	private Tour getGlobalUpperBoundWithNewLocalLowerBoundSearchTour(Tour tour, List<City> remainingCities) {
+		
+		//Don't search further if the incomplete tour plus lower bound is already longer than the current best
+		double tourLengthSoFar = tour.getTourLength();
+		if (tour.getCitiesInTour().size() > 0 && remainingCities.size() > 0) {
+			tourLengthSoFar += tour.getTourLength() + 
+					           tour.getCitiesInTour().get(tour.getCitiesInTour().size() -1).distanceTo(remainingCities.get(0)) + 
+					           remainingCities.get(0).distanceTo(this.startCity);
+		}
+
+		if (tourLengthSoFar > this.bestRouteDistanceSoFar) {
+			return null;
+		}
 				
 		//Cover the base case for when there are no cities remaining
 		if (remainingCities.size() == 0) {
@@ -231,18 +336,6 @@ public class TravellingSalesman {
 				this.bestRouteDistanceSoFar = tour.getTourLength();
 			}
 			return tour;
-		}
-		
-		//Don't search further if the incomplete tour plus lower bound is already longer than the current best
-		double tourLengthSoFar = tour.getTourLength();
-		if (tour.getCitiesInTour().size() > 0 && remainingCities.size() > 0) {
-			tourLengthSoFar += tour.getTourLength() + 
-					           tour.getCitiesInTour().get(tour.getCitiesInTour().size() -1).distanceTo(remainingCities.get(0)) + 
-					           remainingCities.get(0).distanceTo(tour.getCitiesInTour().get(0));
-		}
-
-		if (tourLengthSoFar > this.bestRouteDistanceSoFar) {
-			return null;
 		}
 
 		int numberOfRemainingCities = remainingCities.size();
