@@ -35,14 +35,13 @@ public class TravellingSalesman {
 		this.solutionToUse = solutionToUse.trim();
 		this.bestRouteDistanceSoFar = Double.MAX_VALUE;
 		this.numberOfStatesExpanded = 0;
+		this.distanceTable = new HashMap<CityPair, Double>();
+		fillDistanceTable();
 		
 		if (INITIAL_GREEDY_SOLUTION_WITH_LB.equalsIgnoreCase(solutionToUse.trim()) || INITIAL_GREEDY_SOLUTION_WITH_LB_NEW.equalsIgnoreCase(solutionToUse.trim())) {
-			this.distanceTable = new HashMap<CityPair, Double>();
 			this.greedySolutionTour = new Tour(new ArrayList<City>(), 0);
-			fillDistanceTable();
 			findGreedySolutionTour();
 		} else {
-			this.distanceTable = null;
 			this.greedySolutionTour = null;
 		}
 		
@@ -124,7 +123,7 @@ public class TravellingSalesman {
 		
 		Tour shortestTour = null;
 		Tour tour = new Tour(new ArrayList<City>(), 0);
-		tour.addCity(startCity);
+		tour.addCity(startCity, 0.0);
 		if (EXHAUSTIVE_SOLUTION.equalsIgnoreCase(this.solutionToUse)) {
 			shortestTour = getExhaustiveSearchTour(tour, this.citiesToVisit);
 		} else if (GLOBAL_UPPER_BOUND_SOLUTION.equalsIgnoreCase(this.solutionToUse)) {
@@ -177,7 +176,7 @@ public class TravellingSalesman {
 			
 			cityToAdd = remainingCities.get(cityIndex);
 			modifiedTour = new Tour(tour);
-			modifiedTour.addCity(cityToAdd);
+			modifiedTour.addCity(cityToAdd, this.distanceTable.get(new CityPair(cityToAdd, modifiedTour.getLastCity())).doubleValue());
 			modifiedMemainingCities = new ArrayList<City>(remainingCities);
 			modifiedMemainingCities.remove(cityToAdd);
 			
@@ -228,7 +227,7 @@ public class TravellingSalesman {
 			
 			cityToAdd = remainingCities.get(cityIndex);
 			modifiedTour = new Tour(tour);
-			modifiedTour.addCity(cityToAdd);
+			modifiedTour.addCity(cityToAdd, this.distanceTable.get(new CityPair(cityToAdd, modifiedTour.getLastCity())).doubleValue());
 			modifiedMemainingCities = new ArrayList<City>(remainingCities);
 			modifiedMemainingCities.remove(cityToAdd);
 			
@@ -288,7 +287,7 @@ public class TravellingSalesman {
 			
 			cityToAdd = remainingCities.get(cityIndex);
 			modifiedTour = new Tour(tour);
-			modifiedTour.addCity(cityToAdd);
+			modifiedTour.addCity(cityToAdd, this.distanceTable.get(new CityPair(cityToAdd, modifiedTour.getLastCity())).doubleValue());
 			modifiedMemainingCities = new ArrayList<City>(remainingCities);
 			modifiedMemainingCities.remove(cityToAdd);
 			
@@ -350,7 +349,7 @@ public class TravellingSalesman {
 			
 			cityToAdd = remainingCities.get(cityIndex);
 			modifiedTour = new Tour(tour);
-			modifiedTour.addCity(cityToAdd);
+			modifiedTour.addCity(cityToAdd, this.distanceTable.get(new CityPair(cityToAdd, modifiedTour.getLastCity())).doubleValue());
 			modifiedMemainingCities = new ArrayList<City>(remainingCities);
 			modifiedMemainingCities.remove(cityToAdd);
 			

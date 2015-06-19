@@ -55,21 +55,6 @@ public class Tour {
 	}
 	
 	/**
-	 * Add a city to the tour by appending the cities array with the new city and incrementing the tour length by the distance from
-	 * the last city to the new city
-	 * @param cityToAdd
-	 */
-	public void addCity(City cityToAdd) {
-		
-		City lastCity = getLastCity();
-		this.citiesInTour.add(cityToAdd);
-		if (lastCity != null) {
-			this.tourLength += lastCity.distanceTo(cityToAdd);
-		}
-		
-	}
-	
-	/**
 	 * Add a city to the tour by appending the cities array with the new city and incrementing the tour length by the distance 
 	 * passed in as a parameter
 	 * @param cityToAdd
